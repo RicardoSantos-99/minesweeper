@@ -1,0 +1,39 @@
+<div>
+  <h1>Minesweeper</h1>
+  <div class="game">
+    <div class="board" style="display: flex;">
+      <%= for row <- @board do %>
+        <div class="board-row">
+          <%= for cell <- row do %>
+            <div class="flex-no-wrap flex flex-row">
+              
+              <button
+                phx-click="reveal"
+                phx-value-row={cell.value.row}
+                phx-value-col={cell.value.col}
+                class="square square-unrevealed"
+                style="background-color: #D3D3D3; width: 70px; height: 70px; border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
+                data-col={cell.value.col}
+                data-row={cell.value.row}
+                data-bomb={cell.bomb}
+              >
+                <%= if cell.revealed do %>
+                  <%= if cell.bomb do %>
+                    <span style="color: red;">💣</span>
+                  <% else %>
+                    <span style="color: black;">
+                      <%= @num_surround_bombs %>
+                    </span>
+                  <% end %>
+                <% end %>
+              </button>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <div class="controls">
+      <button phx-click="new_game">New Game</button>
+    </div>
+  </div>  
+</div>
