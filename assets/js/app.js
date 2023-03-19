@@ -30,6 +30,17 @@ topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", _info => topbar.show(300))
 window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 
+// Em algum lugar do seu LiveView, defina o hook:
+let MyButtonHook = {}
+MyButtonHook.mounted = function () {
+  let button = this.el.querySelector("#my-button")
+  button.addEventListener("contextmenu", (e) => {
+    e.preventDefault()
+    console.log("Botão direito clicado")
+  })
+}
+
+
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 

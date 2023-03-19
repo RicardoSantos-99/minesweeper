@@ -1,28 +1,51 @@
 <div>
-  <h1>Minesweeper</h1>
+  <div class="controls">
+    <button 
+      class="rounded-full transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500 duration-300"
+      phx-click="new_game"
+      >
+      New Game
+    </button>
+  </div>
+
   <div class="game">
     <div class="board" style="display: flex;">
-      <%= for row <- @board do %>
+      <%= for row <- @game.board do %>
         <div class="board-row">
           <%= for cell <- row do %>
             <div class="flex-no-wrap flex flex-row">
               
               <button
+                id="my-button"
                 phx-click="reveal"
                 phx-value-row={cell.value.row}
                 phx-value-col={cell.value.col}
-                class="square square-unrevealed"
-                style="background-color: #D3D3D3; width: 70px; height: 70px; border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
+                phx-context-menu="flag"
+                class={if cell.revealed, do: "bg-[#a9a9a9] ", else: "bg-[#d3d3d3] shadow-md"}
+                style="width: 70px; height: 70px; border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
                 data-col={cell.value.col}
                 data-row={cell.value.row}
                 data-bomb={cell.bomb}
               >
                 <%= if cell.revealed do %>
                   <%= if cell.bomb do %>
-                    <span style="color: red;">💣</span>
+                    <span style="color: red; font-weight: bold; font-size: 40px;">
+                      <span style="color: red;">💣</span>
+                    </span>                   
                   <% else %>
-                    <span style="color: black;">
-                      <%= @num_surround_bombs %>
+                    <span
+                      class={
+                        case cell.num_surround_bombs do
+                          0 -> "text-[#a9a9a9]"
+                          1 -> "text-blue-500"
+                          2 -> "text-green-500"
+                          3 -> "text-red-500"
+                          4 -> "text-purple-500"
+                          5 -> "text-yellow-500"
+                        end <> " font-bold text-4xl"
+                      }
+                    >
+                      <%= cell.num_surround_bombs %>
                     </span>
                   <% end %>
                 <% end %>
@@ -31,9 +54,6 @@
           <% end %>
         </div>
       <% end %>
-    </div>
-    <div class="controls">
-      <button phx-click="new_game">New Game</button>
     </div>
   </div>  
 </div>
