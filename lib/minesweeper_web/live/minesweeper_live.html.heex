@@ -6,6 +6,12 @@
       >
       New Game
     </button>
+
+    <div> 
+      <span class="text-2xl">Bombs: 16</span>
+
+      <span class="text-2xl">Time: <%= @game.time %></span>
+    </div>
   </div>
 
   <div class="game">
@@ -14,9 +20,7 @@
         <div class="board-row">
           <%= for cell <- row do %>
             <div class="flex-no-wrap flex flex-row">
-              
               <button
-                id="my-button"
                 phx-click="reveal"
                 phx-value-row={cell.value.row}
                 phx-value-col={cell.value.col}
@@ -26,7 +30,11 @@
                 data-col={cell.value.col}
                 data-row={cell.value.row}
                 data-bomb={cell.bomb}
-              >
+                >
+                <p> <%= cell.value.col %> / <%= cell.value.row %> </p>
+                <%= if cell.bomb do %>
+                  *
+                <% end %>
                 <%= if cell.revealed do %>
                   <%= if cell.bomb do %>
                     <span style="color: red; font-weight: bold; font-size: 40px;">
@@ -42,6 +50,9 @@
                           3 -> "text-red-500"
                           4 -> "text-purple-500"
                           5 -> "text-yellow-500"
+                          6 -> "text-pink-500"
+                          7 -> "text-gray-500"
+                          8 -> "text-black"
                         end <> " font-bold text-4xl"
                       }
                     >
