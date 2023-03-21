@@ -32,9 +32,6 @@
                 data-bomb={cell.bomb}
                 >
                 <p> <%= cell.value.col %> / <%= cell.value.row %> </p>
-                <%= if cell.bomb do %>
-                  *
-                <% end %>
                 <%= if cell.revealed do %>
                   <%= if cell.bomb do %>
                     <span style="color: red; font-weight: bold; font-size: 40px;">
