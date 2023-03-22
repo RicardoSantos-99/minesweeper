@@ -26,7 +26,7 @@ import { Hooks } from "../vendor/right_click"
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
 	params: {_csrf_token: csrfToken},
-	hooks: Hooks
+	hooks: Hooks,
 })
 
 // Show progress bar on live navigation and form submits

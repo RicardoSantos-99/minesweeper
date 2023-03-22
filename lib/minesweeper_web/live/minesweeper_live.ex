@@ -41,7 +41,14 @@ defmodule MinesweeperWeb.MinesweeperLive do
     {:noreply, socket}
   end
 
-  def handle_event("scroll", _params, socket) do
+  def handle_event("scroll", %{"col" => x, "row" => y}, socket) do
+    board = socket.assigns.game.board
+
+    x = String.to_integer(x)
+    y = String.to_integer(y)
+
+    IO.inspect(x)
+    IO.inspect(y)
     {:noreply, socket}
   end
 
