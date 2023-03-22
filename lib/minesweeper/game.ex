@@ -25,6 +25,7 @@ defmodule Minesweeper.Game do
       for row <- 0..num_row do
         %{
           value: %{row: row, col: col},
+          id: "#{col}-#{row}",
           revealed: false,
           flagged: false,
           bomb: false,
@@ -46,30 +47,30 @@ defmodule Minesweeper.Game do
     }
   end
 
-  def reveal_cell(board, x, y, num) do
-    for col <- board do
-      for cell <- col do
-        if is_clicked_cell?(cell, x, y) do
-          Map.update!(cell, :num_surround_bombs, fn _ -> num end)
-          |> Map.update!(:revealed, fn _ -> true end)
-        else
-          cell
-        end
-      end
-    end
+  def reveal_cell(board, x, y, bombs) do
+    List.update_at(board, x, fn col ->
+      List.update_at(
+        col,
+        y,
+        &(Map.update!(&1, :num_surround_bombs, fn _ -> bombs end)
+          |> Map.update!(:revealed, fn _ -> true end))
+      )
+    end)
   end
 
   def reveal_all_surrounding(board, x, y) do
     cells = valid_neighborhoods(board, x, y)
-
-    {reveal_cells(cells ++ [{x, y}], board), cells}
+    reveal_cells(cells ++ [{x, y}], board)
   end
 
   @spec reveal(cell()) :: cell()
   def reveal(cell), do: cell |> Map.update!(:revealed, fn _ -> true end)
 
   @spec flag(cell()) :: cell()
+  def flag(cell) when cell.revealed, do: cell
   def flag(cell), do: cell |> Map.update!(:flagged, fn _ -> true end)
+
+  def un_flag(cell), do: cell |> Map.update!(:flagged, fn _ -> false end)
 
   @spec fill_board(board()) :: board()
   def fill_board(board) do
@@ -93,7 +94,7 @@ defmodule Minesweeper.Game do
   end
 
   @spec random_value :: boolean()
-  def random_value, do: Enum.random(1..10) < 2
+  def random_value, do: Enum.random(1..10) < 3
 
   @spec is_clicked_cell?(cell(), number(), number()) :: boolean()
   def is_clicked_cell?(cell, col, row) do
@@ -112,16 +113,18 @@ defmodule Minesweeper.Game do
     end
   end
 
-  def get(cells, board) do
+  def reveal_algorithm(cells, board) do
     Enum.reduce(cells, [], fn {col, row}, acc ->
-      neighbors = valid_neighborhoods(board, col, row)
-      [neighbors | acc]
+      if get_num_surrounding_bombs(board, col, row) == 0 do
+        valid_neighborhoods(board, col, row) ++ acc
+      else
+        [{col, row} | acc]
+      end
     end)
-    |> List.flatten()
     |> Enum.uniq()
-    |> Enum.filter(fn {col, row} -> not is_revealed?(board, col, row) end)
-    |> Enum.filter(fn {col, row} -> get_num_surrounding_bombs(board, col, row) === 0 end)
-    |> IO.inspect(label: "lib/minesweeper/game.ex:124")
+    |> Enum.filter(fn {col, row} ->
+      not is_revealed?(board, col, row) and not is_bomb?(board, col, row)
+    end)
   end
 
   @spec moore_neighborhood(number, number) :: coordinates_list()
@@ -150,49 +153,13 @@ defmodule Minesweeper.Game do
   end
 
   @spec has_bomb?([{number(), number()}, ...], board()) :: [boolean(), ...]
-  def has_bomb?(cells, board) do
-    for {col, row} <- cells, do: is_bomb?(board, col, row)
-  end
+  def has_bomb?(cells, board), do: for({col, row} <- cells, do: is_bomb?(board, col, row))
 
   @spec is_bomb?(board(), integer(), integer()) :: boolean()
-  def is_bomb?(board, col, row) do
-    Enum.at(Enum.at(board, col), row).bomb
-  end
+  def is_bomb?(board, col, row), do: Enum.at(Enum.at(board, col), row).bomb
 
   @spec is_revealed?(board(), integer(), integer()) :: any
-  def is_revealed?(board, col, row) do
-    Enum.at(Enum.at(board, col), row).revealed
-  end
-
-  # @spec non_bomb_neighbors_undisclosed(board(), integer(), integer()) :: board()
-  # def non_bomb_neighbors_undisclosed(board, col, row) do
-  #   cells_to_reveal =
-  #     moore_neighborhood(col, row)
-  #     |> Enum.filter(fn {col, row} -> is_valid_cell?(board, col, row) end)
-  #     |> Enum.filter(fn {col, row} -> not is_bomb?(board, col, row) end)
-  #     |> Enum.filter(fn {col, row} -> not is_revealed?(board, col, row) end)
-
-  #   if length(cells_to_reveal) > 0 do
-  #     cells_to_reveal
-  #     |> reveal_cells(board)
-  #     |> all_cells_revealed?(cells_to_reveal, [])
-  #   else
-  #     board
-  #   end
-  # end
-
-  # def all_cells_revealed?(board, [{col, row} | tail], list) do
-  #   cells =
-  #     moore_neighborhood(col, row)
-  #     |> Enum.filter(fn {col, row} -> not Enum.member?(list, {col, row}) end)
-  #     |> Enum.filter(fn {col, row} -> is_valid_cell?(board, col, row) end)
-  #     |> Enum.filter(fn {col, row} -> not is_bomb?(board, col, row) end)
-  #     |> Enum.filter(fn {col, row} -> not is_revealed?(board, col, row) end)
-
-  #   all_cells_revealed?(board, tail, list ++ cells)
-  # end
-
-  # def all_cells_revealed?(board, [], list), do: list |> reveal_cells(board)
+  def is_revealed?(board, col, row), do: Enum.at(Enum.at(board, col), row).revealed
 
   @spec update_surrounding_bombs_cell(cell(), board()) :: cell()
   def update_surrounding_bombs_cell(cell, board) do
@@ -205,31 +172,19 @@ defmodule Minesweeper.Game do
     )
   end
 
-  @spec reveal_cells([{integer(), integer()}, ...], board()) :: board()
-  def reveal_cells([], board), do: board
+  @spec reveal_cells([{integer(), integer()}, ...], board()) ::
+          {[{integer(), integer()}, ...], board()}
+  def reveal_cells([], board), do: {[], board}
 
   def reveal_cells(cells, board) do
-    for x <- board do
-      for cell <- x do
-        if Enum.find(cells, &(&1 === {cell.value.col, cell.value.row})) do
-          reveal(cell) |> update_surrounding_bombs_cell(board)
-        else
-          cell
-        end
-      end
-    end
-  end
-
-  @spec reveal_cells2([{integer(), integer()}, ...], board()) ::
-          {[{integer(), integer()}, ...], board()}
-  def reveal_cells2([], board), do: {[], board}
-
-  def reveal_cells2(cells, board) do
     new_board =
       for x <- board do
         for cell <- x do
           if Enum.find(cells, &(&1 === {cell.value.col, cell.value.row})) do
-            reveal(cell)
+            num = get_num_surrounding_bombs(board, cell.value.col, cell.value.row)
+
+            Map.update!(cell, :num_surround_bombs, fn _ -> num end)
+            |> reveal()
           else
             cell
           end
