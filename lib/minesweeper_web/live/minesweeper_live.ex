@@ -3,6 +3,8 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
   alias Minesweeper.Game
 
+  defguard game_off(game) when not game.game_started? or game.game_finished?
+
   def mount(_params, _session, socket) do
     socket = assign(socket, :game, Game.new_game(9, 7))
 
@@ -14,10 +16,18 @@ defmodule MinesweeperWeb.MinesweeperLive do
       Map.update!(socket.assigns.game, :game_started?, fn _ -> true end)
       |> Map.update!(:board, fn _ -> Game.new_board(9, 7) end)
       |> Map.update!(:board, fn board -> Game.fill_board(board) end)
+      |> Map.update!(:game_finished?, fn _ -> false end)
 
     socket = assign(socket, :game, game)
     # socket = assign(socket, :game, GameMock.new_game())
 
+    {:noreply, socket}
+  end
+
+  def handle_event(_, _params, socket) when game_off(socket.assigns.game) do
+    IO.inspect(socket.assigns.game.game_finished?)
+    IO.inspect(socket.assigns.game.game_started?)
+    IO.inspect("Game is not on")
     {:noreply, socket}
   end
 
@@ -47,12 +57,33 @@ defmodule MinesweeperWeb.MinesweeperLive do
     x = String.to_integer(x)
     y = String.to_integer(y)
 
-    IO.inspect(x)
-    IO.inspect(y)
-    {:noreply, socket}
-  end
+    surround_bombs = Game.get_cell(board, x, y).num_surround_bombs
 
-  def handle_event("reveal", _params, socket) when socket.assigns.game.game_started? == false do
+    un_revealed_neighbors = Game.un_revealed_neighbors(board, x, y)
+
+    surround_flagged =
+      un_revealed_neighbors
+      |> Enum.filter(fn {col, row} -> Game.get_cell(board, col, row).flagged end)
+      |> Enum.count()
+
+    game =
+      if surround_bombs == surround_flagged do
+        {cells, board} =
+          Game.un_flagged_neighbors(board, x, y)
+          |> Game.reveal_cells(board)
+
+        revealed_bombs = Enum.any?(cells, fn {col, row} -> Game.is_bomb?(board, col, row) end)
+
+        if revealed_bombs do
+          Game.game_over?(socket.assigns.game)
+        else
+          Map.update!(socket.assigns.game, :board, fn _ -> board end)
+        end
+      else
+        socket.assigns.game
+      end
+
+    socket = assign(socket, :game, game)
     {:noreply, socket}
   end
 
@@ -70,7 +101,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
         |> then(&Map.update!(socket.assigns.game, :board, fn _ -> &1 end))
       else
         true ->
-          game_over?(socket.assigns.game)
+          Game.game_over?(socket.assigns.game)
 
         0 ->
           {cells, board} = Game.reveal_all_surrounding(board, col, row)
@@ -83,11 +114,6 @@ defmodule MinesweeperWeb.MinesweeperLive do
     socket = assign(socket, :game, game)
 
     {:noreply, socket}
-  end
-
-  def game_over?(game) do
-    Map.update!(game, :game_finished?, fn _ -> true end)
-    |> Map.update!(:board, fn _ -> Game.reveal_all_bombs(game.board) end)
   end
 
   def recursion_reval(board, cells) do
