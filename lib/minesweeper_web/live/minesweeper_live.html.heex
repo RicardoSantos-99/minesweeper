@@ -42,16 +42,26 @@
                 data-bomb={cell.bomb}
                 >
 
+                <span>
+                  <%= if cell.bomb do %>
+                    <p class="bg-blue-500"> <%= cell.id %> </p>
+                  <% else %>
+                    <%= cell.id %>
+                  <% end %>
+                </span>
+                
                 <%= if cell.flagged do %>
                   <span style="color: red; font-weight: bold; font-size: 40px;">
                     <span style="color: red;">🚩</span>
                   </span>
                 <% end %>
 
+                
+
                 <%= if cell.revealed do %>
                   <%= if cell.bomb do %>
                     <span style="color: red; font-weight: bold; font-size: 40px;">
-                      <span style="color: red;">💣</span>
+ 
                     </span>                   
                   <% else %>
                     <span

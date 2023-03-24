@@ -108,7 +108,7 @@ defmodule Minesweeper.Game do
   end
 
   @spec random_value :: boolean()
-  def random_value, do: Enum.random(1..10) < 3
+  def random_value, do: Enum.random(1..10) < 1
 
   @spec is_clicked_cell?(cell(), number(), number()) :: boolean()
   def is_clicked_cell?(cell, col, row) do
@@ -127,18 +127,26 @@ defmodule Minesweeper.Game do
     end
   end
 
-  def reveal_algorithm(cells, board) do
-    Enum.reduce(cells, [], fn {col, row}, acc ->
-      if get_num_surrounding_bombs(board, col, row) == 0 do
-        valid_neighborhoods(board, col, row) ++ acc
-      else
-        [{col, row} | acc]
-      end
-    end)
-    |> Enum.uniq()
-    |> Enum.filter(fn {col, row} ->
-      not is_revealed?(board, col, row) and not is_bomb?(board, col, row)
-    end)
+  def reveal_algorithm(cells, board, reveal_bombs?) do
+    cells =
+      Enum.reduce(cells, [], fn {col, row}, acc ->
+        if get_num_surrounding_bombs(board, col, row) == 0 do
+          valid_neighborhoods(board, col, row) ++ acc
+        else
+          [{col, row} | acc]
+        end
+      end)
+      |> Enum.uniq()
+
+    if reveal_bombs? do
+      cells
+      |> Enum.filter(fn {col, row} -> not is_revealed?(board, col, row) end)
+    else
+      cells
+      |> Enum.filter(fn {col, row} ->
+        not is_revealed?(board, col, row) and not is_bomb?(board, col, row)
+      end)
+    end
   end
 
   @spec moore_neighborhood(number, number) :: coordinates_list()
@@ -201,6 +209,7 @@ defmodule Minesweeper.Game do
 
             Map.update!(cell, :num_surround_bombs, fn _ -> num end)
             |> reveal()
+            |> un_flag()
           else
             cell
           end
