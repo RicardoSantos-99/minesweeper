@@ -1,93 +1,69 @@
-<div>
-  <div class="controls">
-    <button 
-      class="rounded-full transition ease-in-out delay-150 bg-blue-500 hover:-translate-y-1 hover:scale-110 hover:bg-indigo-500 duration-300"
-      phx-click="new_game"
-      >
-      New Game
+<div class="bg-gray w-[36rem] h-[36rem] mt-4">
+  <header class="flex justify-around content-center h-16 bg-gray-500">
+    <span class="text-2xl flex content-center items-center">🚩<%= @game.total_bombs %></span>
+
+    <button class="text-3xl" phx-click="new_game">
+      <%= if not @game.game_finished? do %>
+        😀
+      <% else %>
+        😫
+      <% end %>
     </button>
 
-    <div> 
-      <span class="text-2xl">Bombs: 16</span>
+    <span class="text-3xl flex content-center items-center">Time: <%= @game.time %></span>
+  </header>
 
-      <span class="text-2xl">Time: <%= @game.time %></span>
-    </div>
-  </div>
-
-  <%= if @game.game_finished? do %>
-    <span class="text-2xl">Game Over</span>
-  <% end %>
-
-
-  <div class="game">
-    <div class="board" style="display: flex;">
-      <%= for row <- @game.board do %>
-        <div class="board-row">
-          <%= for cell <- row do %>
-            <div class="flex-no-wrap flex flex-row">
-              <button
-                id={cell.id}
-                phx-click="reveal"
-                phx-hook="RightClick"
-                phx-hook="ScrollClick"
-                phx-data-col={cell.value.col}
-                phx-data-row={cell.value.row}
-                phx-value-row={cell.value.row}
-                phx-value-col={cell.value.col}
-                phx-context-menu="flag"
-                class={if cell.revealed, do: "bg-[#a9a9a9] ", else: "bg-[#d3d3d3] shadow-md"}
-                style="width: 70px; height: 70px; border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
-                data-col={cell.value.col}
-                data-row={cell.value.row}
-                data-bomb={cell.bomb}
-                >
-
-                <span>
-                  <%= if cell.bomb do %>
-                    <p class="bg-blue-500"> <%= cell.id %> </p>
-                  <% else %>
-                    <%= cell.id %>
-                  <% end %>
-                </span>
-                
-                <%= if cell.flagged do %>
-                  <span style="color: red; font-weight: bold; font-size: 40px;">
-                    <span style="color: red;">🚩</span>
-                  </span>
-                <% end %>
-
-                
-
-                <%= if cell.revealed do %>
-                  <%= if cell.bomb do %>
-                    <span style="color: red; font-weight: bold; font-size: 40px;">
- 
-                    </span>                   
-                  <% else %>
-                    <span
-                      class={
-                        case cell.num_surround_bombs do
-                          0 -> "text-[#a9a9a9]"
-                          1 -> "text-blue-500"
-                          2 -> "text-green-500"
-                          3 -> "text-red-500"
-                          4 -> "text-purple-500"
-                          5 -> "text-yellow-500"
-                          6 -> "text-pink-500"
-                          7 -> "text-gray-500"
-                          8 -> "text-black"
-                        end <> " font-bold text-4xl"
-                      }
-                    >
-                      <%= cell.num_surround_bombs %>
-                    </span>
-                  <% end %>
-                <% end %>
-              </button>
-            </div>
+  <%= for row <- @game.board do %>
+    <div class="board-row flex flex-row">
+      <%= for cell <- row do %>
+        <button
+          id={cell.id}
+          phx-click="reveal"
+          phx-hook="click"
+          phx-data-col={cell.value.col}
+          phx-data-row={cell.value.row}
+          phx-value-row={cell.value.row}
+          phx-value-col={cell.value.col}
+          phx-context-menu="flag"
+          class={
+            if cell.revealed,
+              do: "bg-[#a9a9a9] w-[4.5rem] h-[4.5rem]",
+              else: "bg-[#d3d3d3] shadow-md w-[4.5rem] h-[4.5rem]"
+          }
+          style="border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
+          data-col={cell.value.col}
+          data-row={cell.value.row}
+          data-bomb={cell.bomb}
+        >
+          <%= if cell.flagged do %>
+            <span style="color: red; font-weight: bold; font-size: 40px;">
+              <span style="color: red;">🚩</span>
+            </span>
           <% end %>
-        </div>
+
+          <%= if cell.revealed do %>
+            <%= if cell.bomb do %>
+              <span style="color: red; font-weight: bold; font-size: 40px;">💣</span>
+            <% else %>
+              <span class={
+                    case cell.num_surround_bombs do
+                      0 -> "text-[#a9a9a9]"
+                      1 -> "text-blue-500"
+                      2 -> "text-green-500"
+                      3 -> "text-red-500"
+                      4 -> "text-purple-500"
+                      5 -> "text-yellow-500"
+                      6 -> "text-pink-500"
+                      7 -> "text-gray-500"
+                      8 -> "text-black"
+                    end <> " font-bold text-4xl"
+                  }>
+                <%= cell.num_surround_bombs %>
+              </span>
+            <% end %>
+          <% end %>
+        </button>
       <% end %>
     </div>
-  </div>  
+  <% end %>
 </div>

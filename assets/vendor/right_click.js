@@ -1,4 +1,4 @@
-let RightClick = {
+let click = {
   mounted() {
     this.el.addEventListener("contextmenu", e => {
       e.preventDefault();
@@ -8,12 +8,12 @@ let RightClick = {
     this.el.addEventListener("mousedown", e => {
       if (e.button == 1) {
         e.preventDefault();
-        this.pushEvent("scroll", { col: this.el.dataset.col, row: this.el.dataset.row});
+        this.pushEvent("scroll", { col: this.el.dataset.col, row: this.el.dataset.row });
       }
     });
   },
 }
 
-let Hooks = {RightClick };
+let Hooks = { click };
 
-export {Hooks};
+export { Hooks };

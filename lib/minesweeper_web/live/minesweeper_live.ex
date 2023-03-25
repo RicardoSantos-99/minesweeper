@@ -26,9 +26,6 @@ defmodule MinesweeperWeb.MinesweeperLive do
   end
 
   def handle_event(_, _params, socket) when game_off(socket.assigns.game) do
-    IO.inspect(socket.assigns.game.game_finished?)
-    IO.inspect(socket.assigns.game.game_started?)
-    IO.inspect("Game is not on")
     {:noreply, socket}
   end
 
@@ -68,11 +65,10 @@ defmodule MinesweeperWeb.MinesweeperLive do
       |> Enum.count()
 
     game =
-      if surround_bombs == surround_flagged do
+      if surround_bombs == surround_flagged and Game.is_revealed?(board, x, y) do
         cells = Game.un_flagged_neighbors(board, x, y)
 
         {board, reaveled} = recursion_reval(board, cells, true)
-        IO.inspect(reaveled)
 
         revealed_bombs = Enum.any?(reaveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
 
