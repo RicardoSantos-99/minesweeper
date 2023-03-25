@@ -45,7 +45,7 @@ defmodule Minesweeper.Game do
       game_started?: false,
       game_finished?: false,
       game_filled?: false,
-      time: 0
+      time: ~T[00:00:00]
     }
   end
 

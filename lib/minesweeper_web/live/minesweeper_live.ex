@@ -11,14 +11,19 @@ defmodule MinesweeperWeb.MinesweeperLive do
     {:ok, socket}
   end
 
+  def handle_info(:update_time, socket) when not game_off(socket.assigns.game) do
+    game = socket.assigns.game
+    Process.send_after(self(), :update_time, 1000)
+
+    assigns = Map.update!(game, :time, fn _ -> Time.add(game.time, 1, :second) end)
+
+    {:noreply, assign(socket, :game, assigns)}
+  end
+
   def handle_info(:update_time, socket) do
-    new_time = socket.assigns.game.time + 1
+    assigns = Map.update!(socket.assigns.game, :time, fn _ -> ~T[00:00:00] end)
 
-    socket = assign(socket, game: %{socket.assigns.game | time: new_time})
-
-    send_update(MinesweeperWeb.Components.Header, id: "header", assigns: socket.assigns.game)
-
-    {:noreply, socket}
+    {:noreply, assign(socket, :game, assigns)}
   end
 
   def handle_event("new_game", _params, socket) do
@@ -31,7 +36,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
     socket = assign(socket, :game, game)
     # socket = assign(socket, :game, GameMock.new_game())
 
-    :timer.send_after(1000, self(), :update_time)
+    Process.send_after(self(), :update_time, 1000)
 
     {:noreply, socket}
   end
