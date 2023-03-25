@@ -1,6 +1,6 @@
 defmodule MinesweeperWeb.MinesweeperLive do
   use MinesweeperWeb, :live_view
-
+  import MinesweeperWeb.Components.Header
   alias Minesweeper.Game
 
   defguard game_off(game) when not game.game_started? or game.game_finished?
@@ -9,6 +9,16 @@ defmodule MinesweeperWeb.MinesweeperLive do
     socket = assign(socket, :game, Game.new_game(9, 7))
 
     {:ok, socket}
+  end
+
+  def handle_info(:update_time, socket) do
+    new_time = socket.assigns.game.time + 1
+
+    socket = assign(socket, game: %{socket.assigns.game | time: new_time})
+
+    send_update(MinesweeperWeb.Components.Header, id: "header", assigns: socket.assigns.game)
+
+    {:noreply, socket}
   end
 
   def handle_event("new_game", _params, socket) do
@@ -20,6 +30,8 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
     socket = assign(socket, :game, game)
     # socket = assign(socket, :game, GameMock.new_game())
+
+    :timer.send_after(1000, self(), :update_time)
 
     {:noreply, socket}
   end

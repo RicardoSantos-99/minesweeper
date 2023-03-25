@@ -1,17 +1,5 @@
 <div class="bg-gray w-[36rem] h-[36rem] mt-4">
-  <header class="flex justify-around content-center h-16 bg-gray-500">
-    <span class="text-2xl flex content-center items-center">🚩<%= @game.total_bombs %></span>
-
-    <button class="text-3xl" phx-click="new_game">
-      <%= if not @game.game_finished? do %>
-        😀
-      <% else %>
-        😫
-      <% end %>
-    </button>
-
-    <span class="text-3xl flex content-center items-center">Time: <%= @game.time %></span>
-  </header>
+  <.header_game game={@game} id="header" module={Header}></.header_game>
 
   <%= for row <- @game.board do %>
     <div class="board-row flex flex-row">
