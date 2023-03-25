@@ -4,7 +4,8 @@ defmodule Minesweeper.Game do
           revealed: boolean(),
           flagged: boolean(),
           bomb: boolean(),
-          num_surround_bombs: integer()
+          num_surround_bombs: integer(),
+          bomb: integer()
         }
 
   @type coordinates_list :: [{integer(), integer()}, ...]
@@ -29,7 +30,8 @@ defmodule Minesweeper.Game do
           revealed: false,
           flagged: false,
           bomb: false,
-          num_surround_bombs: 0
+          num_surround_bombs: 0,
+          bomb: 0
         }
       end
     end
@@ -39,7 +41,7 @@ defmodule Minesweeper.Game do
   def new_game(col, row) do
     %{
       board: new_board(col, row),
-      total_bombs: 20,
+      total_bombs: 0,
       game_started?: false,
       game_finished?: false,
       game_filled?: false,
@@ -90,7 +92,7 @@ defmodule Minesweeper.Game do
   def fill_board(board) do
     for col <- board do
       for row <- col do
-        Map.update(row, :bomb, random_value(), fn _ -> random_value() end)
+        Map.update!(row, :bomb, fn _ -> random_value() end)
       end
     end
   end
@@ -108,7 +110,7 @@ defmodule Minesweeper.Game do
   end
 
   @spec random_value :: boolean()
-  def random_value, do: Enum.random(1..10) < 1
+  def random_value, do: Enum.random(1..10) < 2
 
   @spec is_clicked_cell?(cell(), number(), number()) :: boolean()
   def is_clicked_cell?(cell, col, row) do
