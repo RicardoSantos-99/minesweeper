@@ -14,7 +14,7 @@ defmodule MinesweeperWeb.Components.Header do
         <% end %>
       </button>
 
-      <span class="text-3xl flex content-center items-center"><%= @game.time %></span>
+      <span class="text-3xl flex content-center items-center"><%= @game.clock.time %></span>
     </header>
     """
   end

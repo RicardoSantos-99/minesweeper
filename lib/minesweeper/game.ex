@@ -45,7 +45,7 @@ defmodule Minesweeper.Game do
       game_started?: false,
       game_finished?: false,
       game_filled?: false,
-      time: ~T[00:00:00]
+      clock: %{time: ~T[00:00:00], status: :stopped}
     }
   end
 
@@ -110,7 +110,7 @@ defmodule Minesweeper.Game do
   end
 
   @spec random_value :: boolean()
-  def random_value, do: Enum.random(1..10) < 2
+  def random_value, do: Enum.random(1..15) < 3
 
   @spec is_clicked_cell?(cell(), number(), number()) :: boolean()
   def is_clicked_cell?(cell, col, row) do

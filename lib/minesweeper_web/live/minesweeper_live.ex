@@ -15,13 +15,17 @@ defmodule MinesweeperWeb.MinesweeperLive do
     game = socket.assigns.game
     Process.send_after(self(), :update_time, 1000)
 
-    assigns = Map.update!(game, :time, fn _ -> Time.add(game.time, 1, :second) end)
+    assigns =
+      Map.update!(game, :clock, fn _ ->
+        %{time: Time.add(game.clock.time, 1, :second), status: :running}
+      end)
 
     {:noreply, assign(socket, :game, assigns)}
   end
 
   def handle_info(:update_time, socket) do
-    assigns = Map.update!(socket.assigns.game, :time, fn _ -> ~T[00:00:00] end)
+    assigns =
+      Map.update!(socket.assigns.game, :clock, fn _ -> %{time: ~T[00:00:00], status: :stopped} end)
 
     {:noreply, assign(socket, :game, assigns)}
   end
@@ -32,13 +36,13 @@ defmodule MinesweeperWeb.MinesweeperLive do
       |> Map.update!(:board, fn _ -> Game.new_board(9, 7) end)
       |> Map.update!(:board, fn board -> Game.fill_board(board) end)
       |> Map.update!(:game_finished?, fn _ -> false end)
+      |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :running} end)
 
-    socket = assign(socket, :game, game)
     # socket = assign(socket, :game, GameMock.new_game())
 
-    Process.send_after(self(), :update_time, 1000)
+    if socket.assigns.game.clock.status != :running, do: send(self(), :update_time)
 
-    {:noreply, socket}
+    {:noreply, socket |> assign(:game, game)}
   end
 
   def handle_event(_, _params, socket) when game_off(socket.assigns.game) do
@@ -84,9 +88,9 @@ defmodule MinesweeperWeb.MinesweeperLive do
       if surround_bombs == surround_flagged and Game.is_revealed?(board, x, y) do
         cells = Game.un_flagged_neighbors(board, x, y)
 
-        {board, reaveled} = recursion_reval(board, cells, true)
+        {board, reveled} = recursion_reval(board, cells, true)
 
-        revealed_bombs = Enum.any?(reaveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
+        revealed_bombs = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
 
         if revealed_bombs do
           Game.game_over?(socket.assigns.game)
