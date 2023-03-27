@@ -13,7 +13,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
   def handle_info(:update_time, socket) when not game_off(socket.assigns.game) do
     game = socket.assigns.game
-    Process.send_after(self(), :update_time, 1000)
+    Process.send_after(self(), :update_time, 100_000)
 
     assigns =
       Map.update!(game, :clock, fn _ ->
@@ -52,12 +52,9 @@ defmodule MinesweeperWeb.MinesweeperLive do
   def handle_event("flag", %{"col" => x, "row" => y}, socket) do
     board = socket.assigns.game.board
 
-    x = String.to_integer(x)
-    y = String.to_integer(y)
-
     board =
-      List.update_at(board, x, fn row ->
-        List.update_at(row, y, fn cell ->
+      List.update_at(board, y, fn row ->
+        List.update_at(row, x, fn cell ->
           if cell.flagged, do: Game.un_flag(cell), else: Game.flag(cell)
         end)
       end)
@@ -72,9 +69,6 @@ defmodule MinesweeperWeb.MinesweeperLive do
   def handle_event("scroll", %{"col" => x, "row" => y}, socket) do
     board = socket.assigns.game.board
 
-    x = String.to_integer(x)
-    y = String.to_integer(y)
-
     surround_bombs = Game.get_cell(board, x, y).num_surround_bombs
 
     un_revealed_neighbors = Game.un_revealed_neighbors(board, x, y)
@@ -85,20 +79,22 @@ defmodule MinesweeperWeb.MinesweeperLive do
       |> Enum.count()
 
     game =
-      if surround_bombs == surround_flagged and Game.is_revealed?(board, x, y) do
-        cells = Game.un_flagged_neighbors(board, x, y)
+      case surround_bombs do
+        num when num == surround_flagged ->
+          cells = Game.un_flagged_neighbors(board, x, y)
 
-        {board, reveled} = recursion_reval(board, cells, true)
+          {board, reveled} = recursion_reval(board, cells, true)
 
-        revealed_bombs = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
+          revealed_bombs = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
 
-        if revealed_bombs do
-          Game.game_over?(socket.assigns.game)
-        else
-          Map.update!(socket.assigns.game, :board, fn _ -> board end)
-        end
-      else
-        socket.assigns.game
+          if revealed_bombs do
+            Game.game_over?(socket.assigns.game)
+          else
+            Map.update!(socket.assigns.game, :board, fn _ -> board end)
+          end
+
+        _ ->
+          socket.assigns.game
       end
 
     socket = assign(socket, :game, game)

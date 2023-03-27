@@ -14,24 +14,29 @@
           phx-value-col={cell.value.col}
           phx-context-menu="flag"
           class={
-            if cell.revealed,
-              do: "bg-[#a9a9a9] w-[4.5rem] h-[4.5rem]",
-              else: "bg-[#d3d3d3] shadow-md w-[4.5rem] h-[4.5rem]"
+            if cell.revealed do
+              "bg-[#a9a9a9] revealed "
+            else
+              if cell.flagged do
+                "bg-[#d3d3d3] shadow-md flagged "
+              else
+                 "bg-[#d3d3d3] shadow-md "
+              end
+            end <> "w-[4.5rem] h-[4.5rem]"
           }
           style="border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
           data-col={cell.value.col}
           data-row={cell.value.row}
           data-bomb={cell.bomb}
         >
+
           <%= if cell.flagged do %>
-            <span style="color: red; font-weight: bold; font-size: 40px;">
-              <span style="color: red;">🚩</span>
-            </span>
+            <span class="text-3xl pointer-events-none"> 🚩</span>
           <% end %>
 
           <%= if cell.revealed do %>
             <%= if cell.bomb do %>
-              <span style="color: red; font-weight: bold; font-size: 40px;">💣</span>
+              <span class="text-3xl pointer-events-none" >💣</span>
             <% else %>
               <span class={
                     case cell.num_surround_bombs do
@@ -44,7 +49,7 @@
                       6 -> "text-pink-500"
                       7 -> "text-gray-500"
                       8 -> "text-black"
-                    end <> " font-bold text-4xl"
+                    end <> " font-bold text-4xl revelaed pointer-events-none"
                   }>
                 <%= cell.num_surround_bombs %>
               </span>

@@ -21,9 +21,9 @@ defmodule Minesweeper.Game do
         }
 
   @spec new_board(integer(), integer()) :: board()
-  def new_board(num_coll, num_row) do
-    for col <- 0..num_coll do
-      for row <- 0..num_row do
+  def new_board(num_rows, num_coll) do
+    for row <- 0..num_rows do
+      for col <- 0..num_coll do
         %{
           value: %{row: row, col: col},
           id: "#{col}-#{row}",
@@ -38,9 +38,9 @@ defmodule Minesweeper.Game do
   end
 
   @spec new_game(integer(), integer()) :: game()
-  def new_game(col, row) do
+  def new_game(row, col) do
     %{
-      board: new_board(col, row),
+      board: new_board(row, col),
       total_bombs: 0,
       game_started?: false,
       game_finished?: false,
@@ -90,9 +90,9 @@ defmodule Minesweeper.Game do
 
   @spec fill_board(board()) :: board()
   def fill_board(board) do
-    for col <- board do
-      for row <- col do
-        Map.update!(row, :bomb, fn _ -> random_value() end)
+    for row <- board do
+      for cell <- row do
+        Map.update!(cell, :bomb, fn _ -> random_value() end)
       end
     end
   end
@@ -119,7 +119,11 @@ defmodule Minesweeper.Game do
 
   @spec get_num_surrounding_bombs(board(), number, number) :: non_neg_integer()
   def get_num_surrounding_bombs(board, col, row) do
-    if not is_bomb?(board, col, row) do
+    if not is_bomb?(board, col, row)
+       |> IO.inspect(
+         label: "#{__MODULE__}:#{__ENV__.line} #{DateTime.utc_now()}",
+         limit: :infinity
+       ) do
       valid_neighborhoods(board, col, row)
       |> has_bomb?(board)
       |> Enum.filter(&(&1 === true))
@@ -182,7 +186,9 @@ defmodule Minesweeper.Game do
   def has_bomb?(cells, board), do: for({col, row} <- cells, do: is_bomb?(board, col, row))
 
   @spec is_bomb?(board(), integer(), integer()) :: boolean()
-  def is_bomb?(board, col, row), do: Enum.at(Enum.at(board, col), row).bomb
+  def is_bomb?(board, col, row) do
+    Enum.at(Enum.at(board, col), row).bomb
+  end
 
   @spec is_revealed?(board(), integer(), integer()) :: any
   def is_revealed?(board, col, row), do: Enum.at(Enum.at(board, col), row).revealed
@@ -228,9 +234,9 @@ defmodule Minesweeper.Game do
 
   @spec reveal_all_bombs(board()) :: board()
   def reveal_all_bombs(board) do
-    for col <- board do
-      for row <- col do
-        if row.bomb, do: reveal(row) |> un_flag(), else: row |> un_flag()
+    for row <- board do
+      for cell <- row do
+        if cell.bomb, do: reveal(row) |> un_flag(), else: row |> un_flag()
       end
     end
   end
