@@ -27,19 +27,21 @@ let click = {
 
         const neighbors = neighbors_moore(col, row, rowLength, colLength);
 
-        const flaggedNeighbors = neighbors.filter(([col, row]) =>
+        const surround_flagged = neighbors.filter(([col, row]) =>
           neighbors_with_class(col, row, "flagged")
         );
 
-        if (flaggedNeighbors.length < cellValue) {
-          neighbors
-            .filter(([col, row]) => !neighbors_with_class(col, row, "flagged"))
-            .forEach(([col, row]) => {
-              document.getElementById(`${col}-${row}`).style.backgroundColor =
-                "#A9A9A9";
-            });
+        const no_flag_neighbors = neighbors.filter(
+          ([col, row]) => !neighbors_with_class(col, row, "flagged")
+        );
+
+        if (surround_flagged.length == cellValue) {
+          this.pushEvent("scroll", { no_flag_neighbors });
         } else {
-          this.pushEvent("scroll", { col, row });
+          no_flag_neighbors.forEach(([col, row]) => {
+            document.getElementById(`${col}-${row}`).style.backgroundColor =
+              "#A9A9A9";
+          });
         }
       }
     });

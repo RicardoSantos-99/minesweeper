@@ -67,46 +67,10 @@ defmodule MinesweeperWeb.MinesweeperLive do
     {:noreply, socket}
   end
 
-  def handle_event("scroll", %{"col" => x, "row" => y}, socket) do
-    board = socket.assigns.game.board
+  def handle_event("scroll", %{"no_flag_neighbors" => no_flag_neighbors}, socket) do
+    game = scroll_logical(socket, no_flag_neighbors)
 
-    surround_bombs = Game.get_cell(board, x, y).num_surround_bombs
-
-    # FIXME: remove this line and receive the number of flags from the params
-    un_revealed_neighbors = Game.un_revealed_neighbors(board, x, y)
-
-    # FIXME: remove this line and receive the number of flags from the params
-    surround_flagged =
-      un_revealed_neighbors
-      |> Enum.filter(fn {col, row} -> Game.get_cell(board, col, row).flagged end)
-      |> Enum.count()
-
-    game =
-      case surround_bombs do
-        num when num == surround_flagged ->
-          cells = Game.un_flagged_neighbors(board, x, y)
-
-          {board, reveled} = recursion_reval(board, cells, true)
-
-          revealed_bombs = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
-
-          if revealed_bombs do
-            Game.game_over?(socket.assigns.game)
-          else
-            Map.update!(socket.assigns.game, :board, fn _ -> board end)
-          end
-
-        num when num < surround_flagged ->
-          # TODO: reveal all surrounding cells including bombs
-          IO.inspect("GAME OVER")
-          socket.assigns.game
-
-        _ ->
-          socket.assigns.game
-      end
-
-    socket = assign(socket, :game, game)
-    {:noreply, socket}
+    {:noreply, assign(socket, :game, game)}
   end
 
   def handle_event("reveal", %{"col" => col, "row" => row}, socket) do
@@ -135,6 +99,27 @@ defmodule MinesweeperWeb.MinesweeperLive do
     socket = assign(socket, :game, game)
 
     {:noreply, socket}
+  end
+
+  defp scroll_logical(socket, no_flag_neighbors) do
+    cells =
+      Enum.map(no_flag_neighbors, fn [x, y] -> {x, y} end)
+      |> IO.inspect(label: "lib/minesweeper_web/live/minesweeper_live.ex:106")
+
+    # FIXME: this is not working, the game is not over when flagging a non bomb cell
+    {board, reveled} = recursion_reval(socket.assigns.game.board, cells, true)
+
+    revealed_bombs? = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
+
+    update_game(socket, board, revealed_bombs?)
+  end
+
+  defp update_game(socket, board, revealed_bombs) when revealed_bombs == false do
+    Map.update!(socket.assigns.game, :board, fn _ -> board end)
+  end
+
+  defp update_game(socket, _board, _) do
+    Game.game_over?(socket.assigns.game)
   end
 
   # OPTIMIZE: this function is not efficient
