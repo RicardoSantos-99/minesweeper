@@ -13,7 +13,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
   def handle_info(:update_time, socket) when not game_off(socket.assigns.game) do
     game = socket.assigns.game
-    Process.send_after(self(), :update_time, 100_000)
+    Process.send_after(self(), :update_time, 10_00)
 
     assigns =
       Map.update!(game, :clock, fn _ ->
@@ -34,14 +34,15 @@ defmodule MinesweeperWeb.MinesweeperLive do
     game =
       Map.update!(socket.assigns.game, :game_started?, fn _ -> true end)
       |> Map.update!(:board, fn _ -> Game.new_board(9, 7) end)
+      # FIXME: remove this line when implemented in the first click
       |> Map.update!(:board, fn board -> Game.fill_board(board) end)
       |> Map.update!(:game_finished?, fn _ -> false end)
       |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :running} end)
 
-    # socket = assign(socket, :game, GameMock.new_game())
+    # socket = assign(socket, :game, Minesweeper.GameMock.new_game())
 
     if socket.assigns.game.clock.status != :running, do: send(self(), :update_time)
-
+    # {:noreply, socket}
     {:noreply, socket |> assign(:game, game)}
   end
 
@@ -71,8 +72,10 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
     surround_bombs = Game.get_cell(board, x, y).num_surround_bombs
 
+    # FIXME: remove this line and receive the number of flags from the params
     un_revealed_neighbors = Game.un_revealed_neighbors(board, x, y)
 
+    # FIXME: remove this line and receive the number of flags from the params
     surround_flagged =
       un_revealed_neighbors
       |> Enum.filter(fn {col, row} -> Game.get_cell(board, col, row).flagged end)
@@ -93,6 +96,11 @@ defmodule MinesweeperWeb.MinesweeperLive do
             Map.update!(socket.assigns.game, :board, fn _ -> board end)
           end
 
+        num when num < surround_flagged ->
+          # TODO: reveal all surrounding cells including bombs
+          IO.inspect("GAME OVER")
+          socket.assigns.game
+
         _ ->
           socket.assigns.game
       end
@@ -102,11 +110,13 @@ defmodule MinesweeperWeb.MinesweeperLive do
   end
 
   def handle_event("reveal", %{"col" => col, "row" => row}, socket) do
+    # TODO: fill board with bombs in the first click
     board = socket.assigns.game.board
 
     col = String.to_integer(col)
     row = String.to_integer(row)
 
+    # HACK: this solution is confusing
     game =
       with false <- Game.is_bomb?(board, col, row),
            around_bombs when around_bombs > 0 <- Game.get_num_surrounding_bombs(board, col, row) do
@@ -127,6 +137,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
     {:noreply, socket}
   end
 
+  # OPTIMIZE: this function is not efficient
   def recursion_reval(board, cells, reveled \\ [], reveal_bombs?) do
     {revealed_cells, board} =
       Game.reveal_algorithm(cells, board, reveal_bombs?) |> Game.reveal_cells(board)
