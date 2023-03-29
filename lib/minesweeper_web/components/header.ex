@@ -3,7 +3,7 @@ defmodule MinesweeperWeb.Components.Header do
 
   def header_game(assigns) do
     ~L"""
-    <header class="flex justify-around content-center h-16 bg-gray-500">
+    <header class="flex justify-around content-center h-14 bg-gray-500">
       <span class="text-2xl flex content-center items-center">🚩<%= @game.total_bombs %></span>
 
       <button class="text-3xl" phx-click="new_game">

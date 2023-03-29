@@ -6,7 +6,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
   defguard game_off(game) when not game.game_started? or game.game_finished?
 
   def mount(_params, _session, socket) do
-    socket = assign(socket, :game, Game.new_game(9, 7))
+    socket = assign(socket, :game, Game.new_game(19, 14))
 
     {:ok, socket}
   end
@@ -33,7 +33,7 @@ defmodule MinesweeperWeb.MinesweeperLive do
   def handle_event("new_game", _params, socket) do
     game =
       Map.update!(socket.assigns.game, :game_started?, fn _ -> true end)
-      |> Map.update!(:board, fn _ -> Game.new_board(9, 7) end)
+      |> Map.update!(:board, fn _ -> Game.new_board(19, 14) end)
       # FIXME: remove this line when implemented in the first click
       |> Map.update!(:board, fn board -> Game.fill_board(board) end)
       |> Map.update!(:game_finished?, fn _ -> false end)

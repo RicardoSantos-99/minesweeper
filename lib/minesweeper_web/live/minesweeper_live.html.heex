@@ -22,19 +22,19 @@
               else
                  "bg-[#d3d3d3] shadow-md "
               end
-            end <> "w-[4.5rem] h-[4.5rem]"
+            end <> "w-[2.4rem] h-[2.4rem]"
           }
-          style="border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
+          style="border: 1px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
           data-col={cell.value.col}
           data-row={cell.value.row}
         >
           <%= if cell.flagged do %>
-            <span class="text-3xl pointer-events-none"> 🚩</span>
+            <span class="text-1xl pointer-events-none"> 🚩</span>
           <% end %>
 
           <%= if cell.revealed do %>
             <%= if cell.bomb do %>
-              <span class="text-3xl pointer-events-none" >💣</span>
+              <span class="text-1xl pointer-events-none" >💣</span>
             <% else %>
               <span class={
                     case cell.num_surround_bombs do
@@ -47,7 +47,7 @@
                       6 -> "text-pink-500"
                       7 -> "text-gray-500"
                       8 -> "text-black"
-                    end <> " font-bold text-4xl revelaed pointer-events-none"
+                    end <> " font-bold text-2xl revelaed pointer-events-none"
                   }>
                 <%= cell.num_surround_bombs %>
               </span>
