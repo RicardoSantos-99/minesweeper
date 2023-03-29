@@ -27,9 +27,7 @@
           style="border: 2px solid #808080; --tw-shadow: inset -.15rem -.15rem grey,inset .15em .15rem white"
           data-col={cell.value.col}
           data-row={cell.value.row}
-          data-bomb={cell.bomb}
         >
-
           <%= if cell.flagged do %>
             <span class="text-3xl pointer-events-none"> 🚩</span>
           <% end %>

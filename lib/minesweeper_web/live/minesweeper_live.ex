@@ -39,7 +39,11 @@ defmodule MinesweeperWeb.MinesweeperLive do
       |> Map.update!(:game_finished?, fn _ -> false end)
       |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :running} end)
 
-    # socket = assign(socket, :game, Minesweeper.GameMock.new_game())
+    # game =
+    #   Minesweeper.GameMock.new_game()
+    #   |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :running} end)
+
+    # socket = assign(socket, :game, game)
 
     if socket.assigns.game.clock.status != :running, do: send(self(), :update_time)
     # {:noreply, socket}
@@ -102,11 +106,8 @@ defmodule MinesweeperWeb.MinesweeperLive do
   end
 
   defp scroll_logical(socket, no_flag_neighbors) do
-    cells =
-      Enum.map(no_flag_neighbors, fn [x, y] -> {x, y} end)
-      |> IO.inspect(label: "lib/minesweeper_web/live/minesweeper_live.ex:106")
+    cells = Enum.map(no_flag_neighbors, fn [x, y] -> {x, y} end)
 
-    # FIXME: this is not working, the game is not over when flagging a non bomb cell
     {board, reveled} = recursion_reval(socket.assigns.game.board, cells, true)
 
     revealed_bombs? = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)

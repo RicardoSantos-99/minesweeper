@@ -131,14 +131,17 @@ defmodule Minesweeper.Game do
 
   def reveal_algorithm(cells, board, reveal_bombs?) do
     cells =
-      Enum.reduce(cells, [], fn {col, row}, acc ->
-        if get_num_surrounding_bombs(board, col, row) == 0 do
-          valid_neighborhoods(board, col, row) ++ acc
+      Enum.reduce_while(cells, cells, fn {col, row}, acc ->
+        if is_bomb?(board, col, row) do
+          {:halt, [{col, row} | acc]}
         else
-          [{col, row} | acc]
+          if get_num_surrounding_bombs(board, col, row) == 0 do
+            {:cont, valid_neighborhoods(board, col, row) ++ acc}
+          else
+            {:cont, [{col, row} | acc]}
+          end
         end
       end)
-      |> Enum.uniq()
 
     if reveal_bombs? do
       cells

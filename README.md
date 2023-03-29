@@ -24,4 +24,4 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 - [] total number of bombs
 - [] choose board [easy, medium, hard]
 - [] subtract flags header
-- [] fix scroll reveal bug
+- [x] fix scroll reveal bug

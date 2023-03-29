@@ -23,13 +23,13 @@ defmodule Minesweeper.GameMock do
             bomb: false,
             flagged: false,
             id: "2-0",
-            num_surround_bombs: 0,
-            revealed: false,
+            num_surround_bombs: 1,
+            revealed: true,
             value: %{col: 2, row: 0}
           },
           %{
             bomb: false,
-            flagged: false,
+            flagged: true,
             id: "3-0",
             num_surround_bombs: 0,
             revealed: false,
