@@ -10,8 +10,6 @@ defmodule Minesweeper.Application do
     children = [
       # Start the Telemetry supervisor
       MinesweeperWeb.Telemetry,
-      # Start the Ecto repository
-      Minesweeper.Repo,
       # Start the PubSub system
       {Phoenix.PubSub, name: Minesweeper.PubSub},
       # Start Finch

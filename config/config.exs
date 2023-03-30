@@ -7,12 +7,10 @@
 # General application configuration
 import Config
 
-config :minesweeper,
-  ecto_repos: [Minesweeper.Repo]
-
 # Configures the endpoint
 config :minesweeper, MinesweeperWeb.Endpoint,
   url: [host: "localhost"],
+  check_origin: false,
   render_errors: [
     formats: [html: MinesweeperWeb.ErrorHTML, json: MinesweeperWeb.ErrorJSON],
     layout: false
@@ -59,6 +57,7 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# config :minesweeper, :env, Mix.env()
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

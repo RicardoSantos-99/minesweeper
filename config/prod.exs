@@ -17,5 +17,7 @@ config :swoosh, api_client: Swoosh.ApiClient.Finch, finch_name: Minesweeper.Finc
 # Do not print debug messages in production
 config :logger, level: :info
 
+url: [host: System.get_env("RENDER_EXTERNAL_HOSTNAME") || "localhost", port: 80],
+
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.
