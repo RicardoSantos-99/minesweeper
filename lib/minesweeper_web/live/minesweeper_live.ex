@@ -6,7 +6,8 @@ defmodule MinesweeperWeb.MinesweeperLive do
   defguard game_off(game) when not game.game_started? or game.game_finished?
 
   # ENHANCE: make this dynamic based on board size and number of bombs
-  defguard win(game) when length(game.total_revealed) == 192
+  # 191
+  defguard win(game) when length(game.total_revealed) == 191
 
   def mount(_params, _session, socket) do
     socket = assign(socket, :game, Game.new_game(16, 12))
@@ -156,10 +157,11 @@ defmodule MinesweeperWeb.MinesweeperLive do
   end
 
   def game_status(game) when win(game) do
-    # TODO: save the score in the database and show the top 10 scores
-    # :ets.insert_new(:score, {:time, game.clock.time})
+    time = Time.to_iso8601(game.clock.time)
+    scores = Enum.sort([time | game.scores])
 
     Map.update!(game, :game_win?, fn _ -> true end)
+    |> Map.update!(:scores, fn _ -> scores end)
     |> Map.update!(:game_finished?, fn _ -> true end)
     |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :stopped} end)
   end

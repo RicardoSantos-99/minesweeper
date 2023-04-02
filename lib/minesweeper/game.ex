@@ -17,7 +17,8 @@ defmodule Minesweeper.Game do
           game_started?: boolean(),
           game_finished?: boolean(),
           game_filled?: boolean(),
-          time: integer()
+          time: integer(),
+          scores: list()
         }
 
   @spec new_board(integer(), integer()) :: board()
@@ -46,7 +47,8 @@ defmodule Minesweeper.Game do
       game_win?: false,
       game_filled?: false,
       total_revealed: [],
-      clock: %{time: ~T[00:00:00], status: :stopped}
+      clock: %{time: ~T[00:00:00], status: :stopped},
+      scores: []
     }
   end
 

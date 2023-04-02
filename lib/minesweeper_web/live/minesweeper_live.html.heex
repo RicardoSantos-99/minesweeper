@@ -1,3 +1,24 @@
+<div class="flex">
+
+<aside class="w-[31rem] h-[31rem] mt-4" >
+  <%= if length(@game.scores) > 0 do %>
+    <table class="table-auto w-full">
+      <thead>
+        <tr>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= for score <- @game.scores do %>
+          <tr class="border-b">
+            <td class="text-center"><%= score %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</aside>
+
 <div class="bg-gray w-[31rem] h-[31rem] mt-4">
   <.header_game game={@game} id="header" module={Header}></.header_game>
 
@@ -28,6 +49,7 @@
           data-col={cell.value.col}
           data-row={cell.value.row}
         >
+
           <%= if cell.flagged do %>
             <span class="text-1xl pointer-events-none"> 🚩</span>
           <% end %>
@@ -57,4 +79,6 @@
       <% end %>
     </div>
   <% end %>
+</div>
+
 </div>
