@@ -5,8 +5,11 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
   defguard game_off(game) when not game.game_started? or game.game_finished?
 
+  # ENHANCE: make this dynamic based on board size and number of bombs
+  defguard win(game) when length(game.total_revealed) == 192
+
   def mount(_params, _session, socket) do
-    socket = assign(socket, :game, Game.new_game(19, 14))
+    socket = assign(socket, :game, Game.new_game(16, 12))
 
     {:ok, socket}
   end
@@ -31,22 +34,21 @@ defmodule MinesweeperWeb.MinesweeperLive do
   end
 
   def handle_event("new_game", _params, socket) do
+    # ENHANCE: make this dynamic based on board size and number of bombs (or user input)
+    # ENHANCE: make this a function in the Game module
+    # jesus christ this is ugly
     game =
       Map.update!(socket.assigns.game, :game_started?, fn _ -> true end)
-      |> Map.update!(:board, fn _ -> Game.new_board(19, 14) end)
-      # FIXME: remove this line when implemented in the first click
-      |> Map.update!(:board, fn board -> Game.fill_board(board) end)
+      |> Map.update!(:board, fn _ -> Game.new_board(16, 12) end)
+      |> Map.update!(:game_filled?, fn _ -> false end)
+      |> Map.update!(:total_revealed, fn _ -> [] end)
+      |> Map.update!(:game_win?, fn _ -> false end)
+      |> Map.update!(:total_bombs, fn _ -> 30 end)
       |> Map.update!(:game_finished?, fn _ -> false end)
       |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :running} end)
 
-    # game =
-    #   Minesweeper.GameMock.new_game()
-    #   |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :running} end)
-
-    # socket = assign(socket, :game, game)
-
     if socket.assigns.game.clock.status != :running, do: send(self(), :update_time)
-    # {:noreply, socket}
+
     {:noreply, socket |> assign(:game, game)}
   end
 
@@ -64,7 +66,15 @@ defmodule MinesweeperWeb.MinesweeperLive do
         end)
       end)
 
-    game = Map.update!(socket.assigns.game, :board, fn _ -> board end)
+    # ENHANCE: transform this into a function
+    game =
+      if Enum.at(Enum.at(board, y), x).flagged do
+        Map.update!(socket.assigns.game, :total_bombs, fn total_bombs -> total_bombs - 1 end)
+      else
+        Map.update!(socket.assigns.game, :total_bombs, fn total_bombs -> total_bombs + 1 end)
+      end
+
+    game = Map.update!(game, :board, fn _ -> board end)
 
     socket = assign(socket, :game, game)
 
@@ -74,33 +84,53 @@ defmodule MinesweeperWeb.MinesweeperLive do
   def handle_event("scroll", %{"no_flag_neighbors" => no_flag_neighbors}, socket) do
     game = scroll_logical(socket, no_flag_neighbors)
 
-    {:noreply, assign(socket, :game, game)}
+    {:noreply, assign(socket, :game, game_status(game))}
   end
 
   def handle_event("reveal", %{"col" => col, "row" => row}, socket) do
-    # TODO: fill board with bombs in the first click
-    board = socket.assigns.game.board
-
     col = String.to_integer(col)
     row = String.to_integer(row)
 
-    # HACK: this solution is confusing
+    # ENHANCE: transform this into a function with a guard clause
     game =
-      with false <- Game.is_bomb?(board, col, row),
-           around_bombs when around_bombs > 0 <- Game.get_num_surrounding_bombs(board, col, row) do
-        Game.reveal_cell(board, col, row, around_bombs)
-        |> then(&Map.update!(socket.assigns.game, :board, fn _ -> &1 end))
+      if !socket.assigns.game.game_filled? do
+        num_rows = length(socket.assigns.game.board)
+        num_cols = length(hd(socket.assigns.game.board))
+
+        bombs = Game.random_bombs(num_rows, num_cols, socket.assigns.game.total_bombs, {col, row})
+
+        board = Game.fill_board(socket.assigns.game.board, bombs)
+
+        Map.update!(socket.assigns.game, :game_filled?, fn _ -> true end)
+        |> Map.update!(:board, fn _ -> board end)
       else
-        true ->
-          Game.game_over?(socket.assigns.game)
-
-        0 ->
-          {board, _} = recursion_reval(board, [{col, row}], false)
-
-          Map.update!(socket.assigns.game, :board, fn _ -> board end)
+        socket.assigns.game
       end
 
-    socket = assign(socket, :game, game)
+    # HACK: this solution is confusing
+    game =
+      with false <- Game.is_bomb?(game.board, col, row),
+           around_bombs when around_bombs > 0 <-
+             Game.get_num_surrounding_bombs(game.board, col, row) do
+        cells = Game.reveal_cell(game.board, col, row, around_bombs)
+
+        Map.update!(game, :board, fn _ -> cells end)
+        |> Map.update!(:total_revealed, fn total_revealed -> total_revealed ++ [{col, row}] end)
+      else
+        true ->
+          Game.game_over?(game)
+
+        0 ->
+          {board, reveled} = recursion_reval(game.board, [{col, row}], false)
+
+          game
+          |> Map.update!(:total_revealed, fn total_revealed ->
+            total_revealed ++ reveled
+          end)
+          |> Map.update!(:board, fn _ -> board end)
+      end
+
+    socket = assign(socket, :game, game_status(game))
 
     {:noreply, socket}
   end
@@ -112,21 +142,39 @@ defmodule MinesweeperWeb.MinesweeperLive do
 
     revealed_bombs? = Enum.any?(reveled, fn {col, row} -> Game.is_bomb?(board, col, row) end)
 
-    update_game(socket, board, revealed_bombs?)
+    update_game(socket, board, reveled, revealed_bombs?)
   end
 
-  defp update_game(socket, board, revealed_bombs) when revealed_bombs == false do
-    Map.update!(socket.assigns.game, :board, fn _ -> board end)
+  defp update_game(socket, board, reveled, revealed_bombs) when revealed_bombs == false do
+    socket.assigns.game
+    |> Map.update!(:total_revealed, fn total_revealed -> total_revealed ++ reveled end)
+    |> Map.update!(:board, fn _ -> board end)
   end
 
-  defp update_game(socket, _board, _) do
+  defp update_game(socket, _reveled, _board, _) do
     Game.game_over?(socket.assigns.game)
   end
 
-  # OPTIMIZE: this function is not efficient
+  def game_status(game) when win(game) do
+    # TODO: save the score in the database and show the top 10 scores
+    # :ets.insert_new(:score, {:time, game.clock.time})
+
+    Map.update!(game, :game_win?, fn _ -> true end)
+    |> Map.update!(:game_finished?, fn _ -> true end)
+    |> Map.update!(:clock, fn _ -> %{time: ~T[00:00:00], status: :stopped} end)
+  end
+
+  def game_status(game) when not win(game) do
+    game
+  end
+
+  # OPTIMIZE: this function is not efficient, it should be refactored
+  # implement a matriz to store the cells that are already revealed and discard them from the list of cells to reveal
+  # and also see if row and col already finished to reveal
   def recursion_reval(board, cells, reveled \\ [], reveal_bombs?) do
     {revealed_cells, board} =
-      Game.reveal_algorithm(cells, board, reveal_bombs?) |> Game.reveal_cells(board)
+      Game.reveal_algorithm(cells, board, reveal_bombs?)
+      |> Game.reveal_cells(board)
 
     reveled = revealed_cells ++ reveled
 

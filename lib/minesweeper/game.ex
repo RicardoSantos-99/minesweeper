@@ -31,7 +31,6 @@ defmodule Minesweeper.Game do
           flagged: false,
           bomb: false,
           num_surround_bombs: 0
-          # bomb: 0
         }
       end
     end
@@ -41,10 +40,12 @@ defmodule Minesweeper.Game do
   def new_game(row, col) do
     %{
       board: new_board(row, col),
-      total_bombs: 0,
+      total_bombs: 30,
       game_started?: false,
       game_finished?: false,
+      game_win?: false,
       game_filled?: false,
+      total_revealed: [],
       clock: %{time: ~T[00:00:00], status: :stopped}
     }
   end
@@ -88,13 +89,29 @@ defmodule Minesweeper.Game do
 
   def un_flag(cell), do: cell |> Map.update!(:flagged, fn _ -> false end)
 
-  @spec fill_board(board()) :: board()
-  def fill_board(board) do
+  @spec fill_board(board(), coordinates_list()) :: board()
+  def fill_board(board, bombs) do
     for row <- board do
       for cell <- row do
-        Map.update!(cell, :bomb, fn _ -> random_value() end)
+        if is_sorted_bomb?(cell, bombs) do
+          Map.update!(cell, :bomb, fn _ -> true end)
+        else
+          cell
+        end
       end
     end
+  end
+
+  def is_sorted_bomb?(cell, bombs) do
+    Enum.any?(bombs, fn {col, row} -> cell.value.col == col and cell.value.row == row end)
+  end
+
+  def random_bombs(num_rows, num_cols, bombs, {row, col}) do
+    coordinates_list = for i <- 0..(num_cols - 1), j <- 0..(num_rows - 1), do: {i, j}
+
+    Enum.shuffle(coordinates_list)
+    |> Enum.filter(fn {x, y} -> x != row and y != col end)
+    |> Enum.take(bombs)
   end
 
   @spec update_num_surrounding_bombs(board(), integer(), integer(), integer()) :: board()
@@ -142,6 +159,7 @@ defmodule Minesweeper.Game do
           end
         end
       end)
+      |> Enum.uniq()
 
     if reveal_bombs? do
       cells
@@ -228,6 +246,7 @@ defmodule Minesweeper.Game do
 
   def game_over?(game) do
     Map.update!(game, :game_finished?, fn _ -> true end)
+    |> Map.update!(:game_filled?, fn _ -> false end)
     |> Map.update!(:board, fn _ -> reveal_all_bombs(game.board) end)
   end
 

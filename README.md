@@ -18,10 +18,17 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 - Source: https://github.com/phoenixframework/phoenix
 
 - game winner
-  - when find all non bombs cells
-  - when flag all bombs
-- [] fill board after first click
-- [] total number of bombs
+  [x] - when find all non bombs cells
+  - when flag all bombs?
+- [x] fill board after first click
+- [x] total number of bombs
 - [] choose board [easy, medium, hard]
-- [] subtract flags header
+- [x] subtract flags header
 - [x] fix scroll reveal bug
+- [] improve reveal algorithm
+- [] add tests
+- [] add docker
+- [] add button and board component
+- [] add game over component
+- [] winner list with name and time (top 10)
+- [] responsive design

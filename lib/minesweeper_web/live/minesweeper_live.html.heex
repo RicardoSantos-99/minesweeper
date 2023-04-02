@@ -1,4 +1,4 @@
-<div class="bg-gray w-[36rem] h-[36rem] mt-4">
+<div class="bg-gray w-[31rem] h-[31rem] mt-4">
   <.header_game game={@game} id="header" module={Header}></.header_game>
 
   <%= for row <- @game.board do %>
@@ -34,7 +34,7 @@
 
           <%= if cell.revealed do %>
             <%= if cell.bomb do %>
-              <span class="text-1xl pointer-events-none" >💣</span>
+              <span class="text-1xl pointer-events-none">💣</span>
             <% else %>
               <span class={
                     case cell.num_surround_bombs do
